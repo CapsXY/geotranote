@@ -6,26 +6,26 @@ type ServiceType = 'ordinario' | 'operacao' | 'ras';
 type SectorType = 'primeiro' | 'segundo' | 'terceiro_quarto' | 'outros';
 
 interface FormData {
-  responsibleName: string;
-  serviceName: ServiceType;
+  responsible_name: string;
+  service_name: ServiceType;
   sector: SectorType;
-  infractionType: string;
+  infraction_type: string;
   quantity: number;
-  otherInfractions: string;
-  carRemovals: number;
-  motorcycleRemovals: number;
+  other_infractions: string;
+  car_removals: number;
+  motorcycle_removals: number;
 }
 
 function App() {
   const [formData, setFormData] = useState<FormData>({
-    responsibleName: '',
-    serviceName: 'ordinario',
+    responsible_name: '',
+    service_name: 'ordinario',
     sector: 'primeiro',
-    infractionType: '',
+    infraction_type: '',
     quantity: 1,
-    otherInfractions: '',
-    carRemovals: 0,
-    motorcycleRemovals: 0
+    other_infractions: '',
+    car_removals: 0,
+    motorcycle_removals: 0
   });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -80,24 +80,11 @@ function App() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null); // Clear any previous errors
+    setFormError(null);
     try {
-      const dataToInsert = {
-        responsibleName: formData.responsibleName,
-        serviceName: formData.serviceName,
-        sector: formData.sector,
-        infractionType: formData.infractionType,
-        quantity: formData.quantity,
-        otherInfractions: formData.otherInfractions,
-        carRemovals: formData.carRemovals,
-        motorcycleRemovals: formData.motorcycleRemovals,
-      };
-
-      console.log('Data being sent to Supabase:', dataToInsert);
-
       const { data, error } = await supabase
         .from('geotranote_reports')
-        .insert([dataToInsert]);
+        .insert([formData]);
 
       if (error) {
         console.error('Error saving data to Supabase:', error);
@@ -107,14 +94,14 @@ function App() {
         console.log('Data saved to Supabase:', data);
         alert('Formulário salvo com sucesso!');
         setFormData({
-          responsibleName: '',
-          serviceName: 'ordinario',
+          responsible_name: '',
+          service_name: 'ordinario',
           sector: 'primeiro',
-          infractionType: '',
+          infraction_type: '',
           quantity: 1,
-          otherInfractions: '',
-          carRemovals: 0,
-          motorcycleRemovals: 0
+          other_infractions: '',
+          car_removals: 0,
+          motorcycle_removals: 0
         });
       }
     } catch (error) {
@@ -127,7 +114,7 @@ function App() {
     if (selectedInfraction && quantity > 0) {
       setFormData({
         ...formData,
-        infractionType: selectedInfraction,
+        infraction_type: selectedInfraction,
         quantity: quantity
       });
       setSelectedInfraction('');
@@ -166,16 +153,16 @@ function App() {
               {/* Nome do responsável */}
               <div>
                 <label 
-                  htmlFor="responsibleName" 
+                  htmlFor="responsible_name" 
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Nome do responsável
                 </label>
                 <input
                   type="text"
-                  id="responsibleName"
-                  value={formData.responsibleName}
-                  onChange={(e) => setFormData({...formData, responsibleName: e.target.value})}
+                  id="responsible_name"
+                  value={formData.responsible_name}
+                  onChange={(e) => setFormData({...formData, responsible_name: e.target.value})}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
@@ -196,10 +183,10 @@ function App() {
                       <input
                         type="radio"
                         id={option.value}
-                        name="serviceName"
+                        name="service_name"
                         value={option.value}
-                        checked={formData.serviceName === option.value}
-                        onChange={(e) => setFormData({...formData, serviceName: e.target.value as ServiceType})}
+                        checked={formData.service_name === option.value}
+                        onChange={(e) => setFormData({...formData, service_name: e.target.value as ServiceType})}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       />
                       <label
@@ -275,12 +262,12 @@ function App() {
                   </div>
 
                   {/* Conteúdo do grid */}
-                  {formData.infractionType ? (
+                  {formData.infraction_type ? (
                     <div 
                       className="grid grid-cols-[1fr_1fr_auto] border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-150"
                     >
                       <div className="px-4 py-3 text-sm text-gray-900">
-                        {formData.infractionType}
+                        {formData.infraction_type}
                       </div>
                       <div className="px-4 py-3 text-sm text-gray-900 text-right">
                         {formData.quantity}
@@ -289,7 +276,7 @@ function App() {
                         <button
                           type="button"
                           onClick={() => {
-                            setFormData({ ...formData, infractionType: '', quantity: 1 });
+                            setFormData({ ...formData, infraction_type: '', quantity: 1 });
                           }}
                           className="text-red-600 hover:text-red-800 p-1"
                           title="Excluir infração"
@@ -309,13 +296,13 @@ function App() {
 
                 {/* Outros (descrição) */}
                 <div className="mb-4">
-                  <label htmlFor="otherInfractions" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="other_infractions" className="block text-sm font-medium text-gray-700 mb-2">
                     Outros (descreva somente INFRAÇÕES)
                   </label>
                   <textarea
-                    id="otherInfractions"
-                    value={formData.otherInfractions}
-                    onChange={(e) => setFormData({...formData, otherInfractions: e.target.value})}
+                    id="other_infractions"
+                    value={formData.other_infractions}
+                    onChange={(e) => setFormData({...formData, other_infractions: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]"
                     placeholder="Descreva outras infrações aqui..."
                   />
@@ -326,28 +313,28 @@ function App() {
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Quantidade de REMOÇÕES</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="carRemovals" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="car_removals" className="block text-sm font-medium text-gray-700 mb-2">
                         Carro(s)
                       </label>
                       <input
                         type="number"
-                        id="carRemovals"
+                        id="car_removals"
                         min="0"
-                        value={formData.carRemovals}
-                        onChange={(e) => setFormData({...formData, carRemovals: Number(e.target.value)})}
+                        value={formData.car_removals}
+                        onChange={(e) => setFormData({...formData, car_removals: Number(e.target.value)})}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label htmlFor="motorcycleRemovals" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="motorcycle_removals" className="block text-sm font-medium text-gray-700 mb-2">
                         Moto(s)
                       </label>
                       <input
                         type="number"
-                        id="motorcycleRemovals"
+                        id="motorcycle_removals"
                         min="0"
-                        value={formData.motorcycleRemovals}
-                        onChange={(e) => setFormData({...formData, motorcycleRemovals: Number(e.target.value)})}
+                        value={formData.motorcycle_removals}
+                        onChange={(e) => setFormData({...formData, motorcycle_removals: Number(e.target.value)})}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
