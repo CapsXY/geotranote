@@ -1,7 +1,7 @@
 const infractionOptions = [
   // Add all your infraction options here
-	"5002-0-Multa, por não identificação do condutor infrator, imposta à pessoa jurídica",
-	"5010-0-Dirigir veículo sem possuir CNH ou Permissão para Dirigir",
+	"5002-0 Multa, por não identificação do condutor infrator, imposta à pessoa jurídica",
+	"5010-0 Dirigir veículo sem possuir CNH ou Permissão para Dirigir",
 	"5029-1 Dirigir veículo com CNH ou PPD cassada",
 	"5029-2 Dirigir veículo com CNH ou PPD com suspensão do direito de dirigir",
 	"5037-1 Dirigir veículo com CNH de categoria diferente da do veículo e Dirigir veículo com CNH ou PPD com suspensão do direito de dirigir",

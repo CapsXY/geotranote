@@ -4,7 +4,7 @@ import supabase from './supabase';
 import infractionOptions from './infractionOptions';
 
 type ServiceType = 'ordinario' | 'operacao' | 'ras';
-type SectorType = 'primeiro' | 'segundo' | 'terceiro_quarto' | 'outros';
+type SectorType = 'GEOTRAN - 1º Distrito' | 'GEOTRAN - 2º Distrito' | 'GEOTRAN - 3º/4º Distrito' | '1º Distrito' | '2º Distrito' | '3º Distrito' | '4º Distrito' | 'GEDAM' | 'GRE' | 'GMAP' | 'ROMU' | 'RAS' | 'Operação';
 
 interface Infraction {
   infraction_type: string;
@@ -16,7 +16,6 @@ interface FormData {
   responsible_name: string;
   service_name: ServiceType;
   sector: SectorType;
-  other_infractions: string;
   car_removals: number;
   motorcycle_removals: number;
 }
@@ -25,8 +24,7 @@ function App() {
   const [formData, setFormData] = useState<FormData>({
     responsible_name: '',
     service_name: 'ordinario',
-    sector: 'primeiro',
-    other_infractions: '',
+    sector: 'GEOTRAN - 1º Distrito',
     car_removals: 0,
     motorcycle_removals: 0
   });
@@ -107,7 +105,6 @@ function App() {
               responsible_name: formData.responsible_name,
               service_name: formData.service_name,
               sector: formData.sector,
-              other_infractions: formData.other_infractions,
               car_removals: formData.car_removals,
               motorcycle_removals: formData.motorcycle_removals
             }
@@ -154,7 +151,6 @@ function App() {
               responsible_name: formData.responsible_name,
               service_name: formData.service_name,
               sector: formData.sector,
-              other_infractions: formData.other_infractions,
               car_removals: formData.car_removals,
               motorcycle_removals: formData.motorcycle_removals
             }
@@ -176,8 +172,7 @@ function App() {
       setFormData({
         responsible_name: '',
         service_name: 'ordinario',
-        sector: 'primeiro',
-        other_infractions: '',
+        sector: 'GEOTRAN - 1º Distrito',
         car_removals: 0,
         motorcycle_removals: 0
       });
@@ -287,10 +282,19 @@ function App() {
                 </label>
                 <div className="space-y-3">
                   {[
-                    { value: 'primeiro', label: '1º Distrito' },
-                    { value: 'segundo', label: '2º Distrito' },
-                    { value: 'terceiro_quarto', label: '3º e 4º Distrito' },
-                    { value: 'outros', label: 'Outros' }
+                    { value: 'GEOTRAN - 1º Distrito', label: 'GEOTRAN - 1º Distrito' },
+                    { value: 'GEOTRAN - 2º Distrito', label: 'GEOTRAN - 2º Distrito' },
+                    { value: 'GEOTRAN - 3º/4º Distrito', label: 'GEOTRAN - 3º/4º Distrito' },
+                    { value: '1º Distrito', label: '1º Distrito' },
+                    { value: '2º Distrito', label: '2º Distrito' },
+                    { value: '3º Distrito', label: '3º Distrito' },
+                    { value: '4º Distrito', label: '4º Distrito' },
+                    { value: 'GEDAM', label: 'GEDAM' },
+                    { value: 'GRE', label: 'GRE' },
+                    { value: 'GMAP', label: 'GMAP' },
+                    { value: 'ROMU', label: 'ROMU' },
+                    { value: 'RAS', label: 'RAS' },
+                    { value: 'Operação', label: 'Operação' }
                   ].map((option) => (
                     <div key={option.value} className="flex items-center">
                       <input
@@ -373,20 +377,6 @@ function App() {
                       Nenhuma infração registrada
                     </div>
                   )}
-                </div>
-
-                {/* Outros (descrição) */}
-                <div className="mb-4">
-                  <label htmlFor="other_infractions" className="block text-sm font-medium text-gray-700 mb-2">
-                    Outros (descreva somente INFRAÇÕES)
-                  </label>
-                  <textarea
-                    id="other_infractions"
-                    value={formData.other_infractions}
-                    onChange={(e) => setFormData({...formData, other_infractions: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]"
-                    placeholder="Descreva outras infrações aqui..."
-                  />
                 </div>
 
                 {/* Quantidade de REMOÇÕES */}
