@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus, X, Search } from 'lucide-react';
 import supabase from './supabase';
+import infractionOptions from './infractionOptions';
 
 type ServiceType = 'ordinario' | 'operacao' | 'ras';
 type SectorType = 'primeiro' | 'segundo' | 'terceiro_quarto' | 'outros';
@@ -38,13 +39,6 @@ function App() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [supabaseError, setSupabaseError] = useState<string | null>(null);
-
-  // Sample infractions for the dropdown
-  const infractionOptions = [
-    'Ausência de licença ambiental',
-    'Descarte irregular de resíduos',
-    'Poluição sonora'
-  ];
 
   // Filter infractions based on search term
   const filteredInfractions = infractionOptions.filter(infraction =>
