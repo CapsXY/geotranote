@@ -9,7 +9,7 @@ type SectorType = 'GEOTRAN - 1º Distrito' | 'GEOTRAN - 2º Distrito' | 'GEOTRAN
 interface Infraction {
   infraction_type: string;
   quantity: number;
-  report_id?: number;
+  report_uid?: string;
 }
 
 interface FormData {
@@ -90,7 +90,7 @@ function App() {
         const { data: insertedInfractions, error: infractionsError } = await supabase
           .from('infractions')
           .insert(infractionData)
-          .select('id');
+          .select('uid');
 
         if (infractionsError) {
           console.error('Detailed infraction error:', infractionsError);
@@ -108,7 +108,7 @@ function App() {
               car_removals: formData.car_removals,
               motorcycle_removals: formData.motorcycle_removals
             }
-          ]).select('id').single();
+          ]).select('uid').single();
 
         console.log('reportData:', reportData);
         console.log('reportError:', reportError);
@@ -121,10 +121,10 @@ function App() {
         }
 
         if (reportData && insertedInfractions) {
-          // Update infractions with report_id
+          // Update infractions with report_uid
           const updatedInfractions = insertedInfractions.map((infraction, index) => ({
-            id: infraction.id,
-            report_id: reportData.id,
+            uid: infraction.uid,
+            report_uid: reportData.uid,
             infraction_type: infractions[index].infraction_type,
             quantity: infractions[index].quantity
           }));
@@ -136,7 +136,7 @@ function App() {
           console.log('updateError:', updateError);
 
           if (updateError) {
-            console.error('Error updating infractions with report_id:', updateError);
+            console.error('Error updating infractions with report_uid:', updateError);
             console.error('Supabase update error details:', updateError);
             setFormError('Erro ao atualizar as infrações.');
             return;
@@ -154,7 +154,7 @@ function App() {
               car_removals: formData.car_removals,
               motorcycle_removals: formData.motorcycle_removals
             }
-          ]).select('id').single();
+          ]).select('uid').single();
 
         console.log('reportData:', reportData);
         console.log('reportError:', reportError);
