@@ -76,37 +76,13 @@ function App() {
     e.preventDefault();
     setFormError(null);
     try {
-      // Save main report data
-      const { data: reportData, error: reportError } = await supabase
-        .from('geotranote_reports')
-        .insert([
-          {
-            responsible_name: formData.responsible_name,
-            service_name: formData.service_name,
-            sector: formData.sector,
-            car_removals: formData.car_removals,
-            motorcycle_removals: formData.motorcycle_removals
-          }
-        ]).select('uid').single();
-
-      console.log('reportData:', reportData);
-      console.log('reportError:', reportError);
-
-      if (reportError) {
-        console.error('Error saving report data to Supabase:', reportError);
-        console.error('Supabase report error details:', reportError);
-        setFormError('Erro ao salvar o formulário.');
-        return;
-      }
-
-      // Save infractions after report data is saved
-      if (infractions.length > 0 && reportData) {
+      // Save infractions first
+      if (infractions.length > 0) {
         console.log('Attempting to insert infractions:', infractions);
         
         const infractionData = infractions.map(infraction => ({
           infraction_type: infraction.infraction_type,
-          quantity: infraction.quantity,
-          report_uid: reportData.uid // Use report_uid from reportData
+          quantity: infraction.quantity
         }));
         
         console.log('Formatted infraction data:', infractionData);
@@ -114,11 +90,80 @@ function App() {
         const { data: insertedInfractions, error: infractionsError } = await supabase
           .from('infractions')
           .insert(infractionData)
-          .select('*');
+          .select('uid');
 
         if (infractionsError) {
           console.error('Detailed infraction error:', infractionsError);
           throw infractionsError;
+        }
+
+        // Save main report data
+        const { data: reportData, error: reportError } = await supabase
+          .from('geotranote_reports')
+          .insert([
+            {
+              responsible_name: formData.responsible_name,
+              service_name: formData.service_name,
+              sector: formData.sector,
+              car_removals: formData.car_removals,
+              motorcycle_removals: formData.motorcycle_removals
+            }
+          ]).select('uid').single();
+
+        console.log('reportData:', reportData);
+        console.log('reportError:', reportError);
+
+        if (reportError) {
+          console.error('Error saving report data to Supabase:', reportError);
+          console.error('Supabase report error details:', reportError);
+          setFormError('Erro ao salvar o formulário.');
+          return;
+        }
+
+        if (reportData && insertedInfractions) {
+          // Update infractions with report_uid
+          const updatedInfractions = insertedInfractions.map((infraction, index) => ({
+            uid: infraction.uid,
+            report_uid: reportData.uid,
+            infraction_type: infractions[index].infraction_type,
+            quantity: infractions[index].quantity
+          }));
+
+          const { error: updateError } = await supabase
+            .from('infractions')
+            .upsert(updatedInfractions);
+
+          console.log('updateError:', updateError);
+
+          if (updateError) {
+            console.error('Error updating infractions with report_uid:', updateError);
+            console.error('Supabase update error details:', updateError);
+            setFormError('Erro ao atualizar as infrações.');
+            return;
+          }
+        }
+      } else {
+        // Save main report data if no infractions
+        const { data: reportData, error: reportError } = await supabase
+          .from('geotranote_reports')
+          .insert([
+            {
+              responsible_name: formData.responsible_name,
+              service_name: formData.service_name,
+              sector: formData.sector,
+              car_removals: formData.car_removals,
+              motorcycle_removals: formData.motorcycle_removals
+            }
+          ]).select('uid').single();
+
+        console.log('reportData:', reportData);
+        console.log('reportError:', reportError);
+
+        if (reportError) {
+          console.error('Error saving report data to Supabase:', reportError);
+          console.error('Supabase report error details:', reportError);
+          setFormError('Erro ao salvar o formulário.');
+          return;
         }
       }
 
@@ -272,35 +317,98 @@ function App() {
                 </div>
               </div>
 
-              {/* Quantidade de REMOÇÕES */}
-              <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Quantidade de REMOÇÕES</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="car_removals" className="block text-sm font-medium text-gray-700 mb-2">
-                      Carro(s)
-                    </label>
-                    <input
-                      type="number"
-                      id="car_removals"
-                      min="0"
-                      value={formData.car_removals}
-                      onChange={(e) => setFormData({...formData, car_removals: Number(e.target.value)})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+              {/* Infrações */}
+              <div>
+                <h2 className="text-sm font-medium text-gray-700 mb-4">Tipos de infrações</h2>
+                
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mb-4 transition-colors duration-200"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Adicionar infração
+                </button>
+
+                {/* Grid de infrações */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                  {/* Header do grid */}
+                  <div className="grid grid-cols-[1fr_1fr_auto] bg-gray-50 border-b border-gray-200">
+                    <div className="px-4 py-3 text-sm font-medium text-gray-700">
+                      Infração
+                    </div>
+                    <div className="px-4 py-3 text-sm font-medium text-gray-700 text-right">
+                      Quantidade
+                    </div>
+                    <div className="px-4 py-3 text-sm font-medium text-gray-700">
+                      Ações
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="motorcycle_removals" className="block text-sm font-medium text-gray-700 mb-2">
-                      Moto(s)
-                    </label>
-                    <input
-                      type="number"
-                      id="motorcycle_removals"
-                      min="0"
-                      value={formData.motorcycle_removals}
-                      onChange={(e) => setFormData({...formData, motorcycle_removals: Number(e.target.value)})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+
+                  {/* Conteúdo do grid */}
+                  {infractions.length > 0 ? (
+                    infractions.map((infraction, index) => (
+                      <div 
+                        key={index}
+                        className="grid grid-cols-[1fr_1fr_auto] border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-150"
+                      >
+                        <div className="px-4 py-3 text-sm text-gray-900">
+                          {infraction.infraction_type}
+                        </div>
+                        <div className="px-4 py-3 text-sm text-gray-900 text-right">
+                          {infraction.quantity}
+                        </div>
+                        <div className="px-4 py-3 flex items-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveInfraction(index)}
+                            className="text-red-600 hover:text-red-800 p-1"
+                            title="Excluir infração"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-8 text-center text-sm text-gray-500 bg-gray-50 bg-opacity-50">
+                      Nenhuma infração registrada
+                    </div>
+                  )}
+                </div>
+
+                {/* Quantidade de REMOÇÕES */}
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Quantidade de REMOÇÕES</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="car_removals" className="block text-sm font-medium text-gray-700 mb-2">
+                        Carro(s)
+                      </label>
+                      <input
+                        type="number"
+                        id="car_removals"
+                        min="0"
+                        value={formData.car_removals}
+                        onChange={(e) => setFormData({...formData, car_removals: Number(e.target.value)})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="motorcycle_removals" className="block text-sm font-medium text-gray-700 mb-2">
+                        Moto(s)
+                      </label>
+                      <input
+                        type="number"
+                        id="motorcycle_removals"
+                        min="0"
+                        value={formData.motorcycle_removals}
+                        onChange={(e) => setFormData({...formData, motorcycle_removals: Number(e.target.value)})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
