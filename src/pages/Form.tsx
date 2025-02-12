@@ -1,4 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  Navigate,
+} from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search } from 'lucide-react';
 import supabase from '../supabase';
 import infractionOptions from '../infractionOptions';
@@ -13,20 +20,20 @@ interface Infraction {
 }
 
 interface FormData {
-  responsible_name: string;
   service_name: ServiceType;
   sector: SectorType;
   car_removals: number;
   motorcycle_removals: number;
+  total_approaches: number;
 }
 
 function App() {
   const [formData, setFormData] = useState<FormData>({
-    responsible_name: '',
     service_name: 'ordinario',
     sector: 'GEOTRAN - 1º Distrito',
     car_removals: 0,
-    motorcycle_removals: 0
+    motorcycle_removals: 0,
+    total_approaches: 0
   });
   const [infractions, setInfractions] = useState<Infraction[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -38,12 +45,10 @@ function App() {
   const [formError, setFormError] = useState<string | null>(null);
   const [supabaseError, setSupabaseError] = useState<string | null>(null);
 
-  // Filter infractions based on search term
   const filteredInfractions = infractionOptions.filter(infraction =>
     infraction.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -76,7 +81,6 @@ function App() {
     e.preventDefault();
     setFormError(null);
     try {
-      // Save infractions first
       if (infractions.length > 0) {
         console.log('Attempting to insert infractions:', infractions);
         
@@ -97,18 +101,17 @@ function App() {
           throw infractionsError;
         }
 
-        // Save main report data
         const { data: reportData, error: reportError } = await supabase
           .from('geotranote_reports')
-          .insert([
-            {
-              responsible_name: formData.responsible_name,
-              service_name: formData.service_name,
-              sector: formData.sector,
-              car_removals: formData.car_removals,
-              motorcycle_removals: formData.motorcycle_removals
-            }
-          ]).select('uid').single();
+          .insert([{
+            service_name: formData.service_name,
+            sector: formData.sector,
+            car_removals: formData.car_removals,
+            motorcycle_removals: formData.motorcycle_removals,
+            total_approaches: formData.total_approaches
+          }])
+          .select('uid')
+          .single();
 
         console.log('reportData:', reportData);
         console.log('reportError:', reportError);
@@ -121,7 +124,6 @@ function App() {
         }
 
         if (reportData && insertedInfractions) {
-          // Update infractions with report_uid
           const updatedInfractions = insertedInfractions.map((infraction, index) => ({
             uid: infraction.uid,
             report_uid: reportData.uid,
@@ -143,18 +145,17 @@ function App() {
           }
         }
       } else {
-        // Save main report data if no infractions
         const { data: reportData, error: reportError } = await supabase
           .from('geotranote_reports')
-          .insert([
-            {
-              responsible_name: formData.responsible_name,
-              service_name: formData.service_name,
-              sector: formData.sector,
-              car_removals: formData.car_removals,
-              motorcycle_removals: formData.motorcycle_removals
-            }
-          ]).select('uid').single();
+          .insert([{
+            service_name: formData.service_name,
+            sector: formData.sector,
+            car_removals: formData.car_removals,
+            motorcycle_removals: formData.motorcycle_removals,
+            total_approaches: formData.total_approaches
+          }])
+          .select('uid')
+          .single();
 
         console.log('reportData:', reportData);
         console.log('reportError:', reportError);
@@ -170,11 +171,11 @@ function App() {
       console.log('Data saved to Supabase');
       alert('Formulário salvo com sucesso!');
       setFormData({
-        responsible_name: '',
         service_name: 'ordinario',
         sector: 'GEOTRAN - 1º Distrito',
         car_removals: 0,
-        motorcycle_removals: 0
+        motorcycle_removals: 0,
+        total_approaches: 0
       });
       setInfractions([]);
     } catch (error) {
@@ -209,7 +210,6 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 font-roboto antialiased">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          {/* Header */}
           <div className="flex items-center justify-center gap-3 mb-2">
             <div className="flex flex-col items-center">
               <h1 className="text-3xl font-bold text-gray-800">GEOTRANOTE</h1>
@@ -217,7 +217,6 @@ function App() {
             </div>
           </div>
 
-          {/* Form Card */}
           <div className="bg-white rounded-lg shadow-lg p-8">
             {supabaseError && (
               <div className="text-red-500 mb-4">
@@ -225,25 +224,6 @@ function App() {
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Nome do responsável */}
-              <div>
-                <label 
-                  htmlFor="responsible_name" 
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Nome do responsável
-                </label>
-                <input
-                  type="text"
-                  id="responsible_name"
-                  value={formData.responsible_name}
-                  onChange={(e) => setFormData({...formData, responsible_name: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-
-              {/* Tipo de serviço */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Tipo de serviço
@@ -275,7 +255,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Setor */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Setor
@@ -317,7 +296,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Infrações */}
               <div>
                 <h2 className="text-sm font-medium text-gray-700 mb-4">Tipos de infrações</h2>
                 
@@ -330,9 +308,7 @@ function App() {
                   Adicionar infração
                 </button>
 
-                {/* Grid de infrações */}
                 <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                  {/* Header do grid */}
                   <div className="grid grid-cols-[1fr_1fr_auto] bg-gray-50 border-b border-gray-200">
                     <div className="px-4 py-3 text-sm font-medium text-gray-700">
                       Infração
@@ -345,7 +321,6 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Conteúdo do grid */}
                   {infractions.length > 0 ? (
                     infractions.map((infraction, index) => (
                       <div 
@@ -379,7 +354,18 @@ function App() {
                   )}
                 </div>
 
-                {/* Quantidade de REMOÇÕES */}
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Total de abordagens</h3>
+                  <input
+                    type="number"
+                    id="total_approaches"
+                    min="0"
+                    value={formData.total_approaches}
+                    onChange={(e) => setFormData({...formData, total_approaches: Number(e.target.value)})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Quantidade de REMOÇÕES</h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -413,7 +399,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="pt-4 flex justify-center">
                 {formError && (
                   <div className="text-red-500 mb-4">
@@ -432,7 +417,6 @@ function App() {
         </div>
       </div>
 
-      {/* Sidebar with transition */}
       <div
         className={`fixed inset-0 overflow-hidden z-50 transition-opacity duration-300 ${
           isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -445,7 +429,6 @@ function App() {
           }`}>
             <div className="relative w-96">
               <div className="h-full flex flex-col bg-white shadow-xl">
-                {/* Header */}
                 <div className="px-4 py-6 bg-gray-50 sm:px-6">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-medium text-gray-900">Informe a infração</h2>
@@ -459,10 +442,8 @@ function App() {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 flex flex-col justify-between">
                   <div className="px-4 sm:px-6 py-6 space-y-6">
-                    {/* Searchable Dropdown */}
                     <div ref={dropdownRef} className="relative">
                       <label htmlFor="infraction" className="block text-sm font-medium text-gray-700 mb-2">
                         Selecione a infração
@@ -505,7 +486,6 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Quantity Input */}
                     <div>
                       <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
                         Quantidade
@@ -521,7 +501,6 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Footer */}
                   <div className="flex-shrink-0 px-4 py-4 flex justify-end space-x-2 bg-gray-50">
                     <button
                       type="button"
