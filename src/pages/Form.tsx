@@ -1,14 +1,8 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  Navigate,
-} from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search } from 'lucide-react';
 import supabase from '../supabase';
 import infractionOptions from '../infractionOptions';
+import { nanoid } from 'nanoid';
 
 type ServiceType = 'ordinario' | 'operacao' | 'ras';
 type SectorType = 'GEOTRAN - 1º Distrito' | 'GEOTRAN - 2º Distrito' | 'GEOTRAN - 3º/4º Distrito' | '1º Distrito' | '2º Distrito' | '3º Distrito' | '4º Distrito' | 'GEDAM' | 'GRE' | 'GMAP' | 'ROMU' | 'RAS' | 'Operação';
@@ -43,6 +37,7 @@ function App() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [protocolNumber, setProtocolNumber] = useState<string | null>(null);
   const [supabaseError, setSupabaseError] = useState<string | null>(null);
 
   const filteredInfractions = infractionOptions.filter(infraction =>
@@ -80,15 +75,19 @@ function App() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setProtocolNumber(null);
+
     try {
+      const newProtocolNumber = nanoid();
+
       if (infractions.length > 0) {
         console.log('Attempting to insert infractions:', infractions);
-        
+
         const infractionData = infractions.map(infraction => ({
           infraction_type: infraction.infraction_type,
           quantity: infraction.quantity
         }));
-        
+
         console.log('Formatted infraction data:', infractionData);
 
         const { data: insertedInfractions, error: infractionsError } = await supabase
@@ -108,7 +107,8 @@ function App() {
             sector: formData.sector,
             car_removals: formData.car_removals,
             motorcycle_removals: formData.motorcycle_removals,
-            total_approaches: formData.total_approaches
+            total_approaches: formData.total_approaches,
+            protocol_number: newProtocolNumber
           }])
           .select('uid')
           .single();
@@ -152,7 +152,8 @@ function App() {
             sector: formData.sector,
             car_removals: formData.car_removals,
             motorcycle_removals: formData.motorcycle_removals,
-            total_approaches: formData.total_approaches
+            total_approaches: formData.total_approaches,
+            protocol_number: newProtocolNumber
           }])
           .select('uid')
           .single();
@@ -169,7 +170,8 @@ function App() {
       }
 
       console.log('Data saved to Supabase');
-      alert('Formulário salvo com sucesso!');
+      setProtocolNumber(newProtocolNumber);
+      alert(`Formulário salvo com sucesso! Número de protocolo: ${newProtocolNumber}`);
       setFormData({
         service_name: 'ordinario',
         sector: 'GEOTRAN - 1º Distrito',
@@ -204,6 +206,12 @@ function App() {
     setSelectedInfraction(infraction);
     setSearchTerm(infraction);
     setIsDropdownOpen(false);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+    setSearchTerm('');
+    setSelectedInfraction('');
   };
 
   return (
@@ -241,7 +249,7 @@ function App() {
                         name="service_name"
                         value={option.value}
                         checked={formData.service_name === option.value}
-                        onChange={(e) => setFormData({...formData, service_name: e.target.value as ServiceType})}
+                        onChange={(e) => setFormData({ ...formData, service_name: e.target.value as ServiceType })}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       />
                       <label
@@ -282,7 +290,7 @@ function App() {
                         name="sector"
                         value={option.value}
                         checked={formData.sector === option.value}
-                        onChange={(e) => setFormData({...formData, sector: e.target.value as SectorType})}
+                        onChange={(e) => setFormData({ ...formData, sector: e.target.value as SectorType })}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       />
                       <label
@@ -298,7 +306,7 @@ function App() {
 
               <div>
                 <h2 className="text-sm font-medium text-gray-700 mb-4">Tipos de infrações</h2>
-                
+
                 <button
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
@@ -323,7 +331,7 @@ function App() {
 
                   {infractions.length > 0 ? (
                     infractions.map((infraction, index) => (
-                      <div 
+                      <div
                         key={index}
                         className="grid grid-cols-[1fr_1fr_auto] border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-150"
                       >
@@ -361,7 +369,7 @@ function App() {
                     id="total_approaches"
                     min="0"
                     value={formData.total_approaches}
-                    onChange={(e) => setFormData({...formData, total_approaches: Number(e.target.value)})}
+                    onChange={(e) => setFormData({ ...formData, total_approaches: Number(e.target.value) })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -378,7 +386,7 @@ function App() {
                         id="car_removals"
                         min="0"
                         value={formData.car_removals}
-                        onChange={(e) => setFormData({...formData, car_removals: Number(e.target.value)})}
+                        onChange={(e) => setFormData({ ...formData, car_removals: Number(e.target.value) })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -391,7 +399,7 @@ function App() {
                         id="motorcycle_removals"
                         min="0"
                         value={formData.motorcycle_removals}
-                        onChange={(e) => setFormData({...formData, motorcycle_removals: Number(e.target.value)})}
+                        onChange={(e) => setFormData({ ...formData, motorcycle_removals: Number(e.target.value) })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -418,15 +426,13 @@ function App() {
       </div>
 
       <div
-        className={`fixed inset-0 overflow-hidden z-50 transition-opacity duration-300 ${
-          isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 overflow-hidden z-50 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
       >
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-          <div className={`fixed inset-y-0 right-0 pl-10 max-w-full flex transform transition-transform duration-300 ease-in-out ${
-            isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}>
+          <div className={`fixed inset-y-0 right-0 pl-10 max-w-full flex transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}>
             <div className="relative w-96">
               <div className="h-full flex flex-col bg-white shadow-xl">
                 <div className="px-4 py-6 bg-gray-50 sm:px-6">
@@ -434,7 +440,7 @@ function App() {
                     <h2 className="text-lg font-medium text-gray-900">Informe a infração</h2>
                     <button
                       type="button"
-                      onClick={() => setIsSidebarOpen(false)}
+                      onClick={closeSidebar}
                       className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
                     >
                       <X className="h-6 w-6" />
@@ -504,7 +510,7 @@ function App() {
                   <div className="flex-shrink-0 px-4 py-4 flex justify-end space-x-2 bg-gray-50">
                     <button
                       type="button"
-                      onClick={() => setIsSidebarOpen(false)}
+                      onClick={closeSidebar}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
                     >
                       Voltar

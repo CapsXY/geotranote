@@ -10,10 +10,10 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Form from './pages/Form';
 import Login from './pages/Login';
-import { supabase } from './supabase';
+import supabase, { Session } from './supabase';
 
 function App() {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
